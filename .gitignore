@@ -1,0 +1,5 @@
+venv/
+.idea/
+/backend/migrations/*
+db.sqlite3
+*__pycache__*
