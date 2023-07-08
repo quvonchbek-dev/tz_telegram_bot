@@ -37,13 +37,12 @@ async def get_admins():
 
 async def add_admin(msg: Message) -> BotAdmin:
     try:
+        await add_user(msg.forward_from)
         user = BotUser.objects.filter(chat_id=str(msg.forward_from.id)).first()
-    except AttributeError:
+        admin = BotAdmin.admins.create(admin=user)
+    except Exception:
         return False
-    if not user:
-        # Uzatilgan xabarni o'chirib qo'ysa
-        user = await add_user(msg.forward_from)
-    return BotAdmin.admins.create(admin=user)
+    return admin
 
 
 async def get_stats():
@@ -53,5 +52,4 @@ async def get_stats():
     today = timezone.now()
     today_used = qs.filter(last_seen__month=today.month).filter(last_seen__day=today.day).count()
     today_joined = qs.filter(joined__month=today.month).filter(joined__day=today.day).count()
-    print(today)
     return total, active, total - active, today_used, today_joined

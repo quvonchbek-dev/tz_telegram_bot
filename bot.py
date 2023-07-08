@@ -28,6 +28,16 @@ async def add_admin_handler(msg: Message):
     await Form.add_admin.set()
 
 
+@dp.message_handler(lambda msg: msg.chat.id in get_admin_ids(), commands=['admins'], state="*")
+async def start_handler(msg: Message):
+    adm = db.BotAdmin.admins.all()
+    txt = "<b><i>👨‍💻 BOT ADMINS</i></b>\n\n"
+    for i, a in enumerate(adm):
+        txt += f'<b><i>{i + 1}. <a href="tg://user?id={a.admin.chat_id}">{a.admin.get_full_name()}</a></i></b>\n'
+    await msg.answer(txt)
+    await Form.nothing.set()
+
+
 @dp.message_handler(lambda msg: msg.chat.id in get_admin_ids(), commands=['send_post'], state="*")
 async def _send_post(msg: Message):
     await msg.answer("Well, you can send me a Post or forward to send to users.\n\n/cancel to cancel session.")
@@ -50,23 +60,6 @@ async def stats(msg: Message):
           f"📱 Today used: {today_used}\n" \
           f"➕ Today joined: {today_joined}\n"
     await msg.answer(txt)
-
-
-"""
-Text message handler
-"""
-
-
-@dp.message_handler(content_types=["text"], state="*")
-async def text_handler(msg: Message):
-    ch_id = msg.chat.id
-    channels = await is_subscribed(ch_id)
-    if channels:
-        await bot.send_message(
-            ch_id, "✅ To use the bot, please subscribe to the following channels.",
-            reply_markup=inline.subscription(channels)
-        )
-        return
 
 
 """
@@ -106,6 +99,23 @@ async def send_post_users(msg: Message):
             print(e)
             cnt_err += 1
     await bot.edit_message_text(f"✅ Post sent to {cnt_suc} users.\n\n❌ Not sent to {cnt_err} users.", ch_id, msg_id + 1)
+
+
+"""
+Text message handler
+"""
+
+
+@dp.message_handler(content_types=["text"], state="*")
+async def text_handler(msg: Message):
+    ch_id = msg.chat.id
+    channels = await is_subscribed(ch_id)
+    if channels:
+        await bot.send_message(
+            ch_id, "✅ To use the bot, please subscribe to the following channels.",
+            reply_markup=inline.subscription(channels)
+        )
+        return
 
 
 """

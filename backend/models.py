@@ -29,7 +29,7 @@ class BotUser(models.Model):
 
 
 class BotAdmin(models.Model):
-    admin = models.ForeignKey(BotUser, on_delete=models.CASCADE)
+    admin = models.ForeignKey(BotUser, on_delete=models.CASCADE, unique=True)
     admins = models.Manager()
 
     def __str__(self):
