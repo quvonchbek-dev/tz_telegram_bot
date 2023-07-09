@@ -12,6 +12,6 @@ async def is_subscribed(user_id):
             g = await bot.get_chat_member(int(chat_id), user_id)
             if isinstance(g, ChatMemberLeft):
                 must_subscribe.append(channel)
-        except Exception as e:
+        except Exception:
             must_subscribe.append(channel)
     return must_subscribe

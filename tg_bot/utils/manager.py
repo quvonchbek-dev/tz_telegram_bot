@@ -1,5 +1,6 @@
+from aiogram import Bot
 from django.utils import timezone
-
+import traceback
 from backend.models import BotUser, Channel, BotAdmin, Resource
 from aiogram.types import Chat, Message
 
@@ -105,3 +106,46 @@ async def get_resources(status: int):
 
 async def get_resource(pk: int):
     return Resource.objects.get(pk=pk)
+
+
+async def get_admin(pk=None, chat_id=None):
+    if pk:
+        return BotAdmin.admins.get(pk=pk)
+    elif chat_id:
+        return BotAdmin.admins.filter(admin__chat_id=chat_id).first()
+
+
+async def remove_admin(pk):
+    admin = BotAdmin.admins.get(pk=pk)
+    return admin.delete()
+
+
+async def change_role(pk):
+    dc = {"superuser": "admin", "admin": "superuser"}
+    admin = await get_admin(pk)
+    admin.role = dc[admin.role]
+    admin.save()
+    return admin.role
+
+
+async def add_channel(msg: Message, bot: Bot):
+    try:
+        link = await bot.create_chat_invite_link(msg.forward_from_chat.id)
+        chat = msg.forward_from_chat
+        Channel.objects.create(
+            title=chat.title,
+            invite_link=link.invite_link,
+            chat_id=chat.id
+        )
+        return True
+    except Exception:
+        traceback.print_exc()
+        return False
+
+
+async def get_channels():
+    return Channel.objects.all()
+
+
+async def get_channel(pk):
+    return Channel.objects.get(pk=pk)

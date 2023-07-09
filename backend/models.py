@@ -44,7 +44,7 @@ class BotAdmin(models.Model):
 class Channel(models.Model):
     title = models.CharField(max_length=255)
     chat_id = models.CharField(unique=True, max_length=255, default="-")
-    invite_link = models.URLField(unique=True)
+    invite_link = models.URLField(unique=True, null=True)
 
     def __str__(self) -> str:
         return self.title
@@ -70,4 +70,3 @@ class Resource(models.Model):
 
     def __str__(self):
         return self.title
- 

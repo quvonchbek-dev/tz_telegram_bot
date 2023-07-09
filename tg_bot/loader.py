@@ -26,7 +26,10 @@ def get_admin_ids():
 class Form(StatesGroup):
     nothing = State()
     add_resource = State()
-    delete_resource = State()
+    add_channel = State()
     add_admin = State()
-    send_post = State()
 
+    delete_resource = State()
+    send_post = State()
+    edit_caption = State()
+    edit_ch_link = State()
