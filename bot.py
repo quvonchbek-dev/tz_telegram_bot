@@ -47,7 +47,7 @@ async def is_superuser(chat_id):
 
 async def send_sources(msg: Message):
     res_list = await db.get_resources(1)
-    text = "Sources to use, I'm glad if you find it useful."
+    text = "📇 Sources list. Choose which you want."
     if not res_list.exists():
         text = "🔍 There is not any resource."
     await msg.answer(text, reply_markup=await inline.select_resource(res_list, msg.chat.id in get_admin_ids()))
@@ -159,15 +159,15 @@ Text message handler
 async def edit_caption(msg: Message, state: FSMContext):
     await bot.delete_message(msg.chat.id, msg.message_id - 1)
     caption = msg.text
-    pk = await state.get_data("pk")
+    pk = (await state.get_data()).get("pk")
     try:
         source = await db.get_resource(pk)
         source.title = caption
+        source.save()
         await Form.nothing.set()
-        await state.finish()
-        await msg.reply(f"✅ Caption of the <code>{source.file_name}</code> has been updated successfully.")
+        await msg.answer(f"✅ Caption of the <code>{source.file_name}</code> has been updated successfully.")
         await send_sources(msg)
-    except ValidationError as e:
+    except Exception as e:
         await msg.reply(
             f"⚠ Unable to edit caption. Below error has been occurred:\n\n<code>{e}</code>\n\nPlease try again.",
             reply_markup=await inline.cancel_mk()
@@ -201,6 +201,17 @@ async def text_handler(msg: Message):
 """
 CallBack Query handlers
 """
+
+
+@dp.callback_query_handler(lambda call: "edit_res" in call.data, state="*")
+async def edit_res_(call: CallbackQuery, state: FSMContext):
+    dc = {"pk": int(call.data.split()[-1])}
+    await call.message.delete()
+    await bot.send_message(
+        call.from_user.id, "📝 Well, send me new description for the file",
+        reply_markup=await inline.cancel_mk())
+    await state.set_data(dc)
+    await Form.edit_caption.set()
 
 
 @dp.callback_query_handler(lambda call: call.data == "check_subscription", state="*")
