@@ -29,7 +29,12 @@ class BotUser(models.Model):
 
 
 class BotAdmin(models.Model):
-    admin = models.ForeignKey(BotUser, on_delete=models.CASCADE, unique=True)
+    class Role(models.TextChoices):
+        ADMIN = "admin"
+        SUPERUSER = "superuser"
+
+    admin = models.OneToOneField(BotUser, on_delete=models.CASCADE)
+    role = models.CharField(max_length=30, choices=Role.choices, default=Role.ADMIN)
     admins = models.Manager()
 
     def __str__(self):
@@ -43,3 +48,26 @@ class Channel(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+class Resource(models.Model):
+    class FileType(models.Choices):
+        PHOTO = "PHOTO"
+        VIDEO = "VIDEO"
+        DOCUMENT = "DOCUMENT"
+
+    class Status(models.IntegerChoices):
+        VISIBLE = 1
+        ARCHIVE = 2
+        DELETED = 3
+
+    title = models.TextField()
+    file_name = models.CharField(max_length=255, null=True, blank=True)
+    file_type = models.CharField(max_length=10, default=FileType.DOCUMENT, choices=FileType.choices)
+    file_id = models.CharField(max_length=255)
+    publisher = models.ForeignKey(BotUser, models.CASCADE, "resources", blank=True)
+    status = models.IntegerField(choices=Status.choices, default=Status.VISIBLE)
+
+    def __str__(self):
+        return self.title
+ 

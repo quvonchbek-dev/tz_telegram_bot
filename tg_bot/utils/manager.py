@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from backend.models import BotUser, Channel, BotAdmin
+from backend.models import BotUser, Channel, BotAdmin, Resource
 from aiogram.types import Chat, Message
 
 
@@ -25,6 +25,15 @@ async def add_user(chat: Chat) -> bool:
 async def get_users():
     users = BotUser.objects.all()
     return list(users)
+
+
+async def get_user(msg: Message):
+    try:
+        await add_user(msg.chat)
+        user = BotUser.objects.get(chat_id=str(msg.chat.id))
+        return user
+    except Exception:
+        ...
 
 
 async def get_channels_list():
@@ -53,3 +62,46 @@ async def get_stats():
     today_used = qs.filter(last_seen__month=today.month).filter(last_seen__day=today.day).count()
     today_joined = qs.filter(joined__month=today.month).filter(joined__day=today.day).count()
     return total, active, total - active, today_used, today_joined
+
+
+async def add_resource(msg: Message) -> Resource:
+    if "document" in msg:
+        file_id = msg.document.file_id
+        file_name = msg.document.file_name
+
+    elif "video" in msg:
+        file_id = msg.video.file_id
+        file_name = msg.video.file_name
+
+    else:
+        return False
+    title = msg.caption
+    tp = str(msg.content_type).upper()
+    obj = Resource.objects.create(
+        title=(title or ""),
+        file_name=file_name,
+        file_type=tp,
+        file_id=file_id,
+        publisher=await get_user(msg)
+    )
+    return obj
+
+
+async def change_status_resource(r_id: int, status: int):
+    try:
+        res = Resource.objects.get(pk=r_id)
+        res.status = status
+        res.save()
+    except Exception as ex:
+        print(ex)
+        return False
+    return True
+
+
+async def get_resources(status: int):
+    res = Resource.objects.filter(status=status)
+    return res
+
+
+async def get_resource(pk: int):
+    return Resource.objects.get(pk=pk)
