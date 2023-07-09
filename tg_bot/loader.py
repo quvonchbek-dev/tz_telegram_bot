@@ -12,7 +12,7 @@ if True:
 from tg_bot.utils import manager as db
 from backend.models import BotAdmin
 
-BOT_TOKEN = "5286332608:AAE3PzEgmkPM_kEK_10jtNZRtuNj-kH9Apk"
+BOT_TOKEN = "6139312677:AAHrTSi7rotwtOAJvZlT_eTjFTX5DxyhPHE"
 
 bot = Bot(token=BOT_TOKEN, parse_mode=types.ParseMode.HTML)
 storage = MemoryStorage()

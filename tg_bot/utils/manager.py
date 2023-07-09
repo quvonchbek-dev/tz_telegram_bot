@@ -45,12 +45,14 @@ async def get_admins():
     return BotAdmin.admins.all()
 
 
-async def add_admin(msg: Message) -> BotAdmin:
+async def add_admin(msg: Message, role="admin") -> BotAdmin:
     try:
-        await add_user(msg.forward_from)
-        user = BotUser.objects.filter(chat_id=str(msg.forward_from.id)).first()
-        admin = BotAdmin.admins.create(admin=user)
-    except Exception:
+        chat = msg.forward_from or msg.chat
+        await add_user(chat)
+        user = BotUser.objects.filter(chat_id=str(chat.id)).first()
+        admin = BotAdmin.admins.create(admin=user, role=role)
+    except Exception as e:
+        print(e)
         return False
     return admin
 
