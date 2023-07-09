@@ -120,12 +120,12 @@ async def add_channel_(msg: Message):
     if chn:
         channels = await db.get_channels()
         title = msg.forward_from_chat.title
-        await msg.edit_text(
+        await msg.answer(
             f"➕ <b>{title}</b> has been added to channels list successfully.",
             reply_markup=await inline.channels_kb(channels))
         await Form.nothing.set()
     else:
-        await msg.edit_text(
+        await msg.answer(
             "Unable to add channel to channels list. Something is wrong, please try again.",
             reply_markup=await inline.cancel_mk()
         )
