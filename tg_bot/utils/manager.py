@@ -1,6 +1,5 @@
 from aiogram import Bot
 from django.utils import timezone
-import traceback
 from backend.models import BotUser, Channel, BotAdmin, Resource
 from aiogram.types import Chat, Message
 
@@ -140,8 +139,8 @@ async def add_channel(msg: Message, bot: Bot):
             chat_id=chat.id
         )
         return True
-    except Exception:
-        traceback.print_exc()
+    except Exception as e:
+        print(e)
         return False
 
 

@@ -39,7 +39,10 @@ async def get_channel_info(pk):
 
 
 async def is_superuser(chat_id):
-    return (await db.get_admin(chat_id=chat_id)).role == "superuser"
+    adm = await db.get_admin(chat_id=chat_id)
+    if adm:
+        return adm.role == "superuser"
+    return False
 
 
 async def send_sources(msg: Message):
@@ -65,20 +68,6 @@ async def start_message(msg: Message):
     await msg.answer(send_text, reply_markup=await reply.main_menu(msg.chat.id in get_admin_ids()))
 
 
-# @dp.message_handler(lambda msg: msg.chat.id in get_admin_ids(), commands=['add_admin'], state="*")
-# async def add_admin_handler(msg: Message):
-#     await msg.answer(
-#         "Okay, send me a message from the person you want to add to admin.", reply_markup=await inline.cancel_mk())
-#     await Form.add_admin.set()
-
-
-# @dp.message_handler(lambda msg: msg.chat.id in get_admin_ids(), commands=['send_post'], state="*")
-# async def send_post(msg: Message):
-#     await msg.answer("Well, you can send me a Post or forward to send to users.",
-#     reply_markup=await inline.cancel_mk())
-#     await Form.send_post.set()
-
-
 @dp.message_handler(lambda msg: msg.chat.id in get_admin_ids(), commands=['add_resource'], state="*")
 async def add_resource_command(msg: Message):
     await msg.answer("📁 Ok, send me the file or video with the title.", reply_markup=await inline.cancel_mk())
@@ -100,9 +89,10 @@ async def new_post(msg: Message):
 
 @dp.message_handler(state=Form.add_admin)
 async def add_admin(msg: Message):
+    await bot.delete_message(msg.chat.id, msg.message_id - 1)
     adm = await db.add_admin(msg)
     kb = await inline.cancel_mk()
-    txt = "Unable to add admin. The error has been occurred."
+    txt = "⚠ Unable to add admin. The error has been occurred. Please try again."
     if adm:
         txt = f"{adm.admin.get_full_name()} has been added to list of admins."
         await Form.nothing.set()
@@ -116,6 +106,7 @@ async def add_admin(msg: Message):
 
 @dp.message_handler(state=Form.add_channel, content_types=ContentType.ANY)
 async def add_channel_(msg: Message):
+    await bot.delete_message(msg.chat.id, msg.message_id - 1)
     chn = await db.add_channel(msg, bot)
     if chn:
         channels = await db.get_channels()
@@ -126,13 +117,14 @@ async def add_channel_(msg: Message):
         await Form.nothing.set()
     else:
         await msg.answer(
-            "Unable to add channel to channels list. Something is wrong, please try again.",
+            "⚠ Unable to add channel to channels list. Something is wrong, please try again.",
             reply_markup=await inline.cancel_mk()
         )
 
 
 @dp.message_handler(state=Form.send_post, content_types=ContentType.ANY)
 async def send_post_users(msg: Message):
+    await bot.delete_message(msg.chat.id, msg.message_id - 1)
     await Form.nothing.set()
     ch_id = msg.chat.id
     msg_id = int(msg.message_id)
@@ -165,6 +157,7 @@ Text message handler
 
 @dp.message_handler(content_types=["text"], state=Form.edit_caption)
 async def edit_caption(msg: Message, state: FSMContext):
+    await bot.delete_message(msg.chat.id, msg.message_id - 1)
     caption = msg.text
     pk = await state.get_data("pk")
     try:
@@ -172,11 +165,11 @@ async def edit_caption(msg: Message, state: FSMContext):
         source.title = caption
         await Form.nothing.set()
         await state.finish()
-        await msg.reply("✅ Invite link of channel has been updated successfully.")
+        await msg.reply(f"✅ Caption of the <code>{source.file_name}</code> has been updated successfully.")
         await send_sources(msg)
     except ValidationError as e:
         await msg.reply(
-            f"Unable to add channel. Below error has been occurred:\n\n<code>{e}</code>",
+            f"⚠ Unable to edit caption. Below error has been occurred:\n\n<code>{e}</code>\n\nPlease try again.",
             reply_markup=await inline.cancel_mk()
         )
 
@@ -212,7 +205,21 @@ CallBack Query handlers
 
 @dp.callback_query_handler(lambda call: call.data == "check_subscription", state="*")
 async def check_subs(call: CallbackQuery):
-    await call.message.answer("😊 You have subscribed to all our channels, now you can use our bot.")
+    ch_id = call.message.chat.id
+    msg_id = call.message.message_id
+    ch_list = await is_subscribed(ch_id)
+    if ch_list:
+        try:
+            await bot.edit_message_reply_markup(ch_id, msg_id, reply_markup=await inline.subscription(ch_list))
+        except Exception:
+            await bot.answer_callback_query(call.id, "Please, subscribe to all channels :)", show_alert=True)
+    else:
+        await bot.delete_message(ch_id, msg_id)
+        await bot.send_message(
+            ch_id,
+            "😊 You have subscribed to all our channels, now you can use our bot.",
+            reply_markup=await reply.main_menu(await is_superuser(ch_id))
+        )
 
 
 @dp.callback_query_handler(lambda call: call.data == "back_admin", state="*")
@@ -248,7 +255,6 @@ async def view(call: CallbackQuery):
         await bot.send_video(ch_id, obj.file_id, caption=obj.title, reply_markup=kb)
     else:
         await bot.send_document(ch_id, obj.file_id, caption=obj.title, reply_markup=kb)
-    # await call.answer()
     await call.message.delete()
 
 
@@ -274,7 +280,6 @@ async def _add_source(call: CallbackQuery):
 async def _add_source(call: CallbackQuery):
     txt = await stats_info()
     await call.message.edit_text(txt, reply_markup=await inline.back_admin_kb())
-    # await call.message.delete()
 
 
 @dp.callback_query_handler(lambda call: call.data == "send_post", state="*")

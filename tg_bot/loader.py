@@ -32,4 +32,3 @@ class Form(StatesGroup):
     delete_resource = State()
     send_post = State()
     edit_caption = State()
-    edit_ch_link = State()
