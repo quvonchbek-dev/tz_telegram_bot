@@ -192,7 +192,7 @@ async def text_handler(msg: Message):
     if channels:
         await bot.send_message(
             ch_id, "✅ To use the bot, please subscribe to the following channels.",
-            reply_markup=inline.subscription(channels)
+            reply_markup=await inline.subscription(channels)
         )
         return
     if msg.text == reply.Menu.SOURCES:
