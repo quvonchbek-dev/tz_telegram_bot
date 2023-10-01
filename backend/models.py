@@ -51,6 +51,14 @@ class Channel(models.Model):
 
 
 class Resource(models.Model):
+    SectionTypes = [
+        (0, "📚 Ma'ruza"),
+        (1, "📝 Amaliy"),
+        (2, "📹 Videodarslar"),
+        (3, "🎓 Shaxsiy T."),
+        (4, "📚 Adabiyotlar"),
+    ]
+
     class FileType(models.Choices):
         PHOTO = "PHOTO"
         VIDEO = "VIDEO"
@@ -61,7 +69,8 @@ class Resource(models.Model):
         ARCHIVE = 2
         DELETED = 3
 
-    title = models.TextField()
+    title = models.TextField(blank=True)
+    section = models.IntegerField(choices=SectionTypes, default=0)
     file_name = models.CharField(max_length=255, null=True, blank=True)
     file_type = models.CharField(max_length=10, default=FileType.DOCUMENT, choices=FileType.choices)
     file_id = models.CharField(max_length=255)

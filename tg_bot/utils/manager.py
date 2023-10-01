@@ -66,7 +66,7 @@ async def get_stats():
     return total, active, total - active, today_used, today_joined
 
 
-async def add_resource(msg: Message) -> Resource:
+async def add_resource(msg: Message, section: int) -> Resource:
     if "document" in msg:
         file_id = msg.document.file_id
         file_name = msg.document.file_name
@@ -84,7 +84,8 @@ async def add_resource(msg: Message) -> Resource:
         file_name=file_name,
         file_type=tp,
         file_id=file_id,
-        publisher=await get_user(msg)
+        publisher=await get_user(msg),
+        section=section
     )
     return obj
 
@@ -100,8 +101,8 @@ async def change_status_resource(r_id: int, status: int):
     return True
 
 
-async def get_resources(status: int):
-    res = Resource.objects.filter(status=status)
+async def get_resources(status: int, section: int):
+    res = Resource.objects.filter(status=status, section=section)
     return res
 
 
